@@ -28,13 +28,6 @@ class ChargePoint(BaseChargePoint):
         self.model = 'testModel'
         self.vendor = 'testVendor'
 
-    async def send_message(self, message_type: OcppMessageType, payload: {}):
-        async with self.can_send:
-            if message_type == OcppMessageType.BOOT_NOTIFICATION:
-                return await self._send_boot_notification(payload)
-            elif message_type == OcppMessageType.STATUS_NOTIFICATION:
-                return await self._send_status_notification(payload)
-
     async def _send_boot_notification(self, payload):
         request = call.BootNotificationPayload(
             charging_station={
@@ -59,6 +52,13 @@ class ChargePoint(BaseChargePoint):
     def has_connector_with_id(self, cp_id: int):
         return cp_id in self.connector_ids
 
+    async def send_message(self, message_type: OcppMessageType, payload: {}):
+        async with self.can_send:
+            if message_type == OcppMessageType.BOOT_NOTIFICATION:
+                return await self._send_boot_notification(payload)
+            elif message_type == OcppMessageType.STATUS_NOTIFICATION:
+                return await self._send_status_notification(payload)
+
     async def send_boot_up_sequence(self):
         await self.send_message(
             OcppMessageType.BOOT_NOTIFICATION,
@@ -69,11 +69,12 @@ class ChargePoint(BaseChargePoint):
             }
         )
 
-        await self.send_message(
-            OcppMessageType.STATUS_NOTIFICATION,
-            {
-                FIELD_CONNECTOR_STATUS: VALUE_AVAILABLE,
-                FIELD_CONNECTOR_ID: 1
-            }
-        )
+        for connector_id in self.connector_ids:
+            await self.send_message(
+                OcppMessageType.STATUS_NOTIFICATION,
+                {
+                    FIELD_CONNECTOR_STATUS: VALUE_AVAILABLE,
+                    FIELD_CONNECTOR_ID: connector_id
+                }
+            )
 

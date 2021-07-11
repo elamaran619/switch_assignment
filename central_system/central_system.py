@@ -42,11 +42,10 @@ async def on_connect(websocket, path):
         logging.error('Invalid cp id, expected integer')
         return await websocket.close()
 
-    state.set_cp_state(cp_id, "OFFLINE")
-    ocpp_handler = OcppMessageHandler(cp_id, websocket)
-    ocpp_handler.set_state(state)
+    ocpp_handler = OcppMessageHandler(state, id=cp_id, connection=websocket)
 
     try:
+        state.add_cp(cp_id)
         await ocpp_handler.start()
     except Exception:
         state.remove_cp(cp_id)

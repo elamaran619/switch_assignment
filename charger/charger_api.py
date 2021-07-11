@@ -22,6 +22,19 @@ class ChargerApi:
         app.router.add_get('/', self.get_version)
         app.router.add_post('/status_notification', self.send_status_notification)
 
+    # Preliminary data validation
+    def _validate_send_notification_message(self, payload):
+        if not payload:
+            raise ValueError('{}')
+
+        for field in [FIELD_CONNECTOR_STATUS, FIELD_CONNECTOR_ID]:
+            if field not in payload:
+                raise ValueError(field)
+
+        if not isinstance(payload[FIELD_CONNECTOR_ID], int) or \
+                not self.cp.has_connector_with_id(payload[FIELD_CONNECTOR_ID]):
+            raise ValueError(FIELD_CONNECTOR_ID)
+
     async def start(self):
         logging.info(f"Starting local REST API Server on 'localhost' on port {self.port}")
 
@@ -54,14 +67,7 @@ class ChargerApi:
         try:
             payload = await request.json()
 
-            # Preliminary data validation (more validation is done in send_message)
-            for field in [FIELD_CONNECTOR_STATUS, FIELD_CONNECTOR_ID]:
-                if field not in payload:
-                    raise ValueError(field)
-
-            if not isinstance(payload[FIELD_CONNECTOR_ID], int) or \
-               not self.cp.has_connector_with_id(payload[FIELD_CONNECTOR_ID]):
-                raise ValueError(FIELD_CONNECTOR_ID)
+            self._validate_send_notification_message(payload)
 
             await self.cp.send_message(OcppMessageType.STATUS_NOTIFICATION, payload)
 
@@ -97,4 +103,3 @@ class ChargerApi:
                 },
                 status=500
             )
-

@@ -15,6 +15,9 @@ FIELD_CONNECTOR_STATUS = 'connectorStatus'
 FIELD_CONNECTOR_ID = 'connectorId'
 FIELD_CP_ID = 'evseId'
 
+STATE_ONLINE = 'ONLINE'
+STATE_OFFLINE = 'OFFLINE'
+
 # General
 HEADER_SEC_WEBSOCKET_PROTOCOL = 'Sec-WebSocket-Protocol'
 HEADER_AUTHORIZATION = 'Authorization'

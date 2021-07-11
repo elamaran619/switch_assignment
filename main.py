@@ -52,14 +52,22 @@ def parse_command_line_arguments():
     parser.add_argument("-cids", "--connector-ids", help="[Required] Comma separated list of connector ids")
     parser.add_argument("-op", "--ocpp-port", help="Depending on mode, the OCPP WS port. Default 9000")
     parser.add_argument("-ap", "--api-port", help="Only in mode 0, port for charging station REST API. Default 8080")
+    parser.add_argument("-u", "--user", help="Specify username")
+    parser.add_argument("-p", "--password", help="Specify port")
 
     args = parser.parse_args()
 
     if not args.mode:
-        parser.error('Please select a mode via -m')
+        parser.error('Please pass a mode option via -m')
 
     if args.mode not in [1, 2]:
-        parser.error('Please select 1 or 2 for mode via -m')
+        parser.error('Please pass 1 or 2 for mode via -m')
+
+    if not args.user:
+        parser.error('Please pass username via -u')
+
+    if not args.password:
+        parser.error('Please pass password via -p')
 
     if not args.ocpp_port:
         parser.error('OCPP port value needed via -op argument')
@@ -95,8 +103,8 @@ if __name__ == '__main__':
         asyncio.run(
             start_ocpp_server(
                 port_number=args.ocpp_port,
-                user='user',
-                password='password'
+                user=args.user,
+                password=args.password
             )
         )
     else:
@@ -106,7 +114,7 @@ if __name__ == '__main__':
                 cp_id=args.charge_point_id,
                 connectors=args.connector_ids,
                 rest_api_port=args.api_port,
-                user='user',
-                password='password'
+                user=args.user,
+                password=args.password
             )
         )

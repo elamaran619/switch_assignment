@@ -1,4 +1,4 @@
-from ocpp.exceptions import OCPPError
+from ocpp.exceptions import OCPPError, GenericError
 from ocpp.routing import on
 from ocpp.v201 import ChargePoint as cp
 from ocpp.v201 import call_result
@@ -13,15 +13,15 @@ from common.ocpp_message_type import OcppMessageType
 
 
 class OcppMessageHandler(cp):
-    def set_state(self, state: ServerState):
+    def __init__(self, state: ServerState, **kwargs):
+        cp.__init__(self, **kwargs)
         self.server_state = state
 
     @on('BootNotification')
     def on_boot_notification(self, charging_station, reason, **kwargs):
-        if not self.server_state or not self.server_state.is_message_allowed(self.id, OcppMessageType.BOOT_NOTIFICATION):
-            raise OCPPError(details='Not allowed')
-
-        self.server_state.set_cp_state(self.id, 'ONLINE')
+        if not self.server_state.next_cp_state(self.id, OcppMessageType.BOOT_NOTIFICATION):
+            logging.error('BootNotification message type not allowed in current state')
+            raise GenericError(details='Message not allowed in current state')
 
         return call_result.BootNotificationPayload(
             current_time=datetime.utcnow().isoformat(),
@@ -31,8 +31,9 @@ class OcppMessageHandler(cp):
 
     @on('StatusNotification')
     def on_status_notification(self, **kwargs):
-        if not self.server_state or not self.server_state.is_message_allowed(self.id, OcppMessageType.STATUS_NOTIFICATION):
-            raise OCPPError(details='Message not allowed')
+        if not self.server_state.next_cp_state(self.id, OcppMessageType.BOOT_NOTIFICATION):
+            logging.error('StatusNotification message type not allowed in current state')
+            raise GenericError(details='Message not allowed in current state')
 
         logging.info(f'Received StatusNotification with {str(kwargs)}')
         return call_result.StatusNotificationPayload()
